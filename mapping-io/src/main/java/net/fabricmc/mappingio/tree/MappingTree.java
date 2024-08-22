@@ -19,6 +19,8 @@ package net.fabricmc.mappingio.tree;
 import java.util.Collection;
 import java.util.List;
 
+import net.fabricmc.mappingio.CommentStyle;
+
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -101,7 +103,21 @@ public interface MappingTree extends MappingTreeView {
 		MappingTree getTree();
 
 		void setDstName(String name, int namespace);
+
+		/**
+		 * Sets the HTML-style comment of this mapping.
+		 * @param comment The comment.
+		 */
 		void setComment(String comment);
+
+		/**
+		 * Sets the comment of this mapping.
+		 * @param comment The comment.
+		 * @param style   The comment style.
+		 */
+		default void setComment(String comment, CommentStyle style) {
+			setComment(comment);
+		}
 	}
 
 	interface ClassMapping extends ElementMapping, ClassMappingView {

@@ -21,6 +21,7 @@ import java.io.Reader;
 import java.util.Collections;
 import java.util.Set;
 
+import net.fabricmc.mappingio.CommentStyle;
 import net.fabricmc.mappingio.MappedElementKind;
 import net.fabricmc.mappingio.MappingFlag;
 import net.fabricmc.mappingio.MappingUtil;
@@ -67,7 +68,7 @@ public final class EnigmaFileReader {
 			}
 
 			if (visitor.visitContent()) {
-				StringBuilder commentSb = new StringBuilder(200);
+				CommentBuilder commentSb = new CommentBuilder();
 				final MappingVisitor finalVisitor = visitor;
 
 				do {
@@ -92,7 +93,7 @@ public final class EnigmaFileReader {
 		}
 	}
 
-	private static void readClass(ColumnFileReader reader, int indent, String outerSrcClass, String outerDstClass, StringBuilder commentSb, MappingVisitor visitor) throws IOException {
+	private static void readClass(ColumnFileReader reader, int indent, String outerSrcClass, String outerDstClass, CommentBuilder commentSb, MappingVisitor visitor) throws IOException {
 		String srcInnerName = reader.nextCol();
 		if (srcInnerName == null || srcInnerName.isEmpty()) throw new IOException("missing class-name-a in line "+reader.getLineNumber());
 
@@ -117,7 +118,7 @@ public final class EnigmaFileReader {
 		readClassBody(reader, indent, srcName, dstName, commentSb, visitor);
 	}
 
-	private static void readClassBody(ColumnFileReader reader, int indent, String srcClass, String dstClass, StringBuilder commentSb, MappingVisitor visitor) throws IOException {
+	private static void readClassBody(ColumnFileReader reader, int indent, String srcClass, String dstClass, CommentBuilder commentSb, MappingVisitor visitor) throws IOException {
 		boolean visited = false;
 		int state = 0; // 0=invalid 1=visit -1=skip
 
@@ -133,6 +134,10 @@ public final class EnigmaFileReader {
 				readClass(reader, indent + 1, srcClass, dstClass, commentSb, visitor);
 				state = 0;
 			} else if (reader.nextCol("COMMENT")) { // comment: COMMENT <comment>
+				commentSb.style = CommentStyle.HTML;
+				readComment(reader, commentSb);
+			} else if (reader.nextCol("MDCOMMENT")) { // markdown comment: MDCOMMENT <comment>
+				commentSb.style = CommentStyle.MARKDOWN;
 				readComment(reader, commentSb);
 			} else if ((isMethod = reader.nextCol("METHOD")) || reader.nextCol("FIELD")) { // method: METHOD <name-a> [<name-b>] <desc-a> or field: FIELD <name-a> [<name-b>] <desc-a>
 				state = visitClass(srcClass, dstClass, state, commentSb, visitor);
@@ -173,7 +178,7 @@ public final class EnigmaFileReader {
 	/**
 	 * Re-visit a class if necessary and visit its comment if available.
 	 */
-	private static int visitClass(String srcClass, String dstClass, int state, StringBuilder commentSb, MappingVisitor visitor) throws IOException {
+	private static int visitClass(String srcClass, String dstClass, int state, CommentBuilder commentSb, MappingVisitor visitor) throws IOException {
 		// state: 0=invalid 1=visit -1=skip
 
 		if (state == 0) {
@@ -187,7 +192,7 @@ public final class EnigmaFileReader {
 			state = visitContent ? 1 : -1;
 
 			if (commentSb.length() > 0) {
-				if (state > 0) visitor.visitComment(MappedElementKind.CLASS, commentSb.toString());
+				if (state > 0) visitor.visitComment(MappedElementKind.CLASS, commentSb.toString(), commentSb.style);
 
 				commentSb.setLength(0);
 			}
@@ -196,11 +201,15 @@ public final class EnigmaFileReader {
 		return state;
 	}
 
-	private static void readMethod(ColumnFileReader reader, int indent, StringBuilder commentSb, MappingVisitor visitor) throws IOException {
+	private static void readMethod(ColumnFileReader reader, int indent, CommentBuilder commentSb, MappingVisitor visitor) throws IOException {
 		if (!visitor.visitElementContent(MappedElementKind.METHOD)) return;
 
 		while (reader.nextLine(indent + 2)) {
 			if (reader.nextCol("COMMENT")) { // comment: COMMENT <comment>
+				commentSb.style = CommentStyle.HTML;
+				readComment(reader, commentSb);
+			} else if (reader.nextCol("MDCOMMENT")) { // markdown comment: MDCOMMENT <comment>
+				commentSb.style = CommentStyle.MARKDOWN;
 				readComment(reader, commentSb);
 			} else {
 				submitComment(MappedElementKind.METHOD, commentSb, visitor);
@@ -222,11 +231,15 @@ public final class EnigmaFileReader {
 		submitComment(MappedElementKind.METHOD, commentSb, visitor);
 	}
 
-	private static void readElement(ColumnFileReader reader, MappedElementKind kind, int indent, StringBuilder commentSb, MappingVisitor visitor) throws IOException {
+	private static void readElement(ColumnFileReader reader, MappedElementKind kind, int indent, CommentBuilder commentSb, MappingVisitor visitor) throws IOException {
 		if (!visitor.visitElementContent(kind)) return;
 
 		while (reader.nextLine(indent + kind.level + 1)) {
 			if (reader.nextCol("COMMENT")) { // comment: COMMENT <comment>
+				commentSb.style = CommentStyle.HTML;
+				readComment(reader, commentSb);
+			} else if (reader.nextCol("MDCOMMENT")) { // markdown comment: MDCOMMENT <comment>
+				commentSb.style = CommentStyle.MARKDOWN;
 				readComment(reader, commentSb);
 			}
 		}
@@ -234,7 +247,7 @@ public final class EnigmaFileReader {
 		submitComment(kind, commentSb, visitor);
 	}
 
-	private static void readComment(ColumnFileReader reader, StringBuilder commentSb) throws IOException {
+	private static void readComment(ColumnFileReader reader, CommentBuilder commentSb) throws IOException {
 		if (commentSb.length() > 0) commentSb.append('\n');
 
 		String comment = reader.nextCols(true);
@@ -244,10 +257,36 @@ public final class EnigmaFileReader {
 		}
 	}
 
-	private static void submitComment(MappedElementKind kind, StringBuilder commentSb, MappingVisitor visitor) throws IOException {
+	private static void submitComment(MappedElementKind kind, CommentBuilder commentSb, MappingVisitor visitor) throws IOException {
 		if (commentSb.length() == 0) return;
 
-		visitor.visitComment(kind, commentSb.toString());
+		visitor.visitComment(kind, commentSb.toString(), commentSb.style);
 		commentSb.setLength(0);
+	}
+
+	private static final class CommentBuilder {
+		int length() {
+			return sb.length();
+		}
+
+		void setLength(int length) {
+			sb.setLength(length);
+		}
+
+		void append(String str) {
+			sb.append(str);
+		}
+
+		void append(char c) {
+			sb.append(c);
+		}
+
+		@Override
+		public String toString() {
+			return sb.toString();
+		}
+
+		private final StringBuilder sb = new StringBuilder(200);
+		private CommentStyle style = CommentStyle.HTML;
 	}
 }

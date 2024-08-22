@@ -33,6 +33,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import net.fabricmc.mappingio.CommentStyle;
+
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -693,21 +695,26 @@ public final class MemoryMappingTree implements VisitableMappingTree {
 
 	@Override
 	public void visitComment(MappedElementKind targetKind, String comment) {
+		visitComment(targetKind, comment, CommentStyle.HTML);
+	}
+
+	@Override
+	public void visitComment(MappedElementKind targetKind, String comment, CommentStyle style) {
 		Entry<?> entry;
 
 		switch (targetKind) {
-		case CLASS:
-			entry = currentClass;
-			break;
-		case METHOD:
-			entry = currentMethod;
-			break;
-		default:
-			entry = currentEntry;
+			case CLASS:
+				entry = currentClass;
+				break;
+			case METHOD:
+				entry = currentMethod;
+				break;
+			default:
+				entry = currentEntry;
 		}
 
 		if (entry == null) throw new UnsupportedOperationException("Tried to visit comment before owning target");
-		entry.setComment(comment);
+		entry.setComment(comment, style);
 	}
 
 	abstract static class Entry<T extends Entry<T>> implements ElementMapping {
@@ -715,6 +722,7 @@ public final class MemoryMappingTree implements VisitableMappingTree {
 			this.tree = tree;
 			this.srcName = srcName;
 			this.dstNames = new String[tree.dstNamespaces.size()];
+			this.commentStyle = CommentStyle.HTML;
 		}
 
 		protected Entry(MemoryMappingTree tree, ElementMapping src, int srcNsEquivalent) {
@@ -728,7 +736,7 @@ public final class MemoryMappingTree implements VisitableMappingTree {
 				}
 			}
 
-			setComment(src.getComment());
+			setComment(src.getComment(), src.getCommentStyle());
 		}
 
 		public abstract MappedElementKind getKind();
@@ -775,7 +783,14 @@ public final class MemoryMappingTree implements VisitableMappingTree {
 
 		@Override
 		public final void setComment(String comment) {
+			setComment(comment, CommentStyle.HTML);
+		}
+
+		@Override
+		public void setComment(String comment, CommentStyle style) {
+			Objects.requireNonNull(style, "Comment style cannot be null");
 			this.comment = comment;
+			this.commentStyle = style;
 		}
 
 		protected final boolean acceptElement(MappingVisitor visitor, @Nullable String[] dstDescs) throws IOException {
@@ -799,7 +814,7 @@ public final class MemoryMappingTree implements VisitableMappingTree {
 				return false;
 			}
 
-			if (comment != null) visitor.visitComment(kind, comment);
+			if (comment != null) visitor.visitComment(kind, comment, commentStyle);
 
 			return true;
 		}
@@ -822,6 +837,7 @@ public final class MemoryMappingTree implements VisitableMappingTree {
 		protected String srcName;
 		protected String[] dstNames;
 		protected String comment;
+		protected CommentStyle commentStyle;
 	}
 
 	static final class ClassEntry extends Entry<ClassEntry> implements ClassMapping {
