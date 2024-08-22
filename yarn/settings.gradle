@@ -20,3 +20,4 @@ rootProject.name = "yarn"
 
 includeBuild 'filament'
 includeBuild '../enigma'
+includeBuild '../javapoet'

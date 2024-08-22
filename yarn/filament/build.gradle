@@ -39,7 +39,7 @@ dependencies {
 	implementation "net.fabricmc.unpick:unpick-cli:$properties.unpick_version"
 	implementation "net.fabricmc:tiny-remapper:$properties.tiny_remapper_version"
 	implementation 'net.fabricmc:mapping-io'
-	implementation 'net.fabricmc:javapoet:0.1.1'
+	implementation 'net.fabricmc:javapoet'
 
 	// Contains a number of useful utilities we can re-use.
 	implementation ("net.fabricmc:fabric-loom:1.7.3") {
