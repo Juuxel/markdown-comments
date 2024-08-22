@@ -1,0 +1,22 @@
+plugins {
+	id 'application'
+	id 'com.github.johnrengelman.shadow'
+}
+
+dependencies {
+	implementation project(':enigma')
+}
+
+application {
+	mainClass = 'cuchaz.enigma.command.Main'
+}
+
+jar.manifest.attributes 'Main-Class': application.mainClass.get()
+
+publishing {
+	publications {
+		shadow(MavenPublication) { publication ->
+			project.shadow.component publication
+		}
+	}
+}

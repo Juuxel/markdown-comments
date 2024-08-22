@@ -1,0 +1,19 @@
+name: Build
+on: [ push, pull_request ]
+jobs:
+  build:
+    strategy:
+      matrix:
+        java: [ 17-ubuntu, 21-ubuntu ]
+    runs-on: ubuntu-22.04
+    container:
+      image: mcr.microsoft.com/openjdk/jdk:${{ matrix.java }}
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./gradlew build --stacktrace --warning-mode fail
+      - uses: Juuxel/publish-checkstyle-report@v1
+        if: ${{ failure() }}
+        with:
+          reports: |
+            **/build/reports/checkstyle/*.xml
