@@ -173,16 +173,16 @@ public class CfrDumper extends StringStreamDumper {
 
 				if (javadoc != null) {
 					for (String line : javadoc.comment().split("\\R")) {
-						print(html ? " * " : "///").print(line).newln();
+						print(getCommentPrefix(html)).print(line).newln();
 					}
 
 					if (!recordComponentDocs.isEmpty()) {
-						print(html ? " * " : "///").newln();
+						print(getCommentPrefix(html)).newln();
 					}
 				}
 
 				for (String componentDoc : recordComponentDocs) {
-					print(html ? " * " : "///").print(componentDoc).newln();
+					print(getCommentPrefix(html)).print(componentDoc).newln();
 				}
 
 				if (html) print(" */").newln();
@@ -231,7 +231,7 @@ public class CfrDumper extends StringStreamDumper {
 				if (html) print("/**").newln();
 
 				for (String line : lines) {
-					print(html ? " * " : "///").print(line).newln();
+					print(getCommentPrefix(html)).print(line).newln();
 				}
 
 				if (html) print(" */").newln();
@@ -256,7 +256,7 @@ public class CfrDumper extends StringStreamDumper {
 					if (html) print("/**").newln();
 
 					for (String line : javadoc.comment().split("\\R")) {
-						print(html ? " * " : "///").print(line).newln();
+						print(getCommentPrefix(html)).print(line).newln();
 					}
 
 					if (html) print(" */").newln();
@@ -428,5 +428,9 @@ public class CfrDumper extends StringStreamDumper {
 		}
 
 		return false;
+	}
+
+	private static String getCommentPrefix(boolean html) {
+		return html ? " * " : "/// ";
 	}
 }
