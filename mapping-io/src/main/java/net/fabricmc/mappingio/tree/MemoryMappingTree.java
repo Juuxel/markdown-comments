@@ -788,7 +788,15 @@ public final class MemoryMappingTree implements VisitableMappingTree {
 
 		@Override
 		public void setComment(String comment, CommentStyle style) {
-			Objects.requireNonNull(style, "Comment style cannot be null");
+			if (style == null) {
+				if (comment == null) {
+					// Fall back to default
+					style = CommentStyle.HTML;
+				} else {
+					throw new NullPointerException("Comment style cannot be null for nonnull comment");
+				}
+			}
+
 			this.comment = comment;
 			this.commentStyle = style;
 		}
