@@ -118,7 +118,7 @@ public abstract class JavadocLintTask extends DefaultTask {
 
 				mappings.getAllEntries().parallel().forEach(entry -> {
 					EntryMapping mapping = mappings.get(entry);
-					String javadoc = mapping.javadoc();
+					String javadoc = mapping.javadocComment();
 
 					if (javadoc != null && !javadoc.isEmpty()) {
 						List<String> localErrors = new ArrayList<>();

@@ -8,7 +8,7 @@ buildscript {
 		mavenLocal()
 	}
 	dependencies {
-		classpath "cuchaz:enigma-cli:${project.enigma_version}"
+		classpath "cuchaz:enigma-cli"
 	}
 }
 
@@ -69,7 +69,7 @@ configurations {
 def unpickMetaFile = file("unpick-definitions/unpick.json")
 
 dependencies {
-	enigmaRuntime "cuchaz:enigma-swing:${project.enigma_version}"
+	enigmaRuntime "cuchaz:enigma-swing"
 	enigmaRuntime "net.fabricmc:cfr:${project.cfr_version}"
 	javadocClasspath "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
 	javadocClasspath "org.jetbrains:annotations:${project.jetbrains_annotations_version}"

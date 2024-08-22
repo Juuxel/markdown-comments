@@ -19,3 +19,4 @@ enableFeaturePreview "STABLE_CONFIGURATION_CACHE"
 rootProject.name = "yarn"
 
 includeBuild 'filament'
+includeBuild '../enigma'
