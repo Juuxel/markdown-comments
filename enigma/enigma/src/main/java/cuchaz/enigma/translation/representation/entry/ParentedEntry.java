@@ -21,14 +21,15 @@ import cuchaz.enigma.translation.Translator;
 import cuchaz.enigma.translation.mapping.EntryMap;
 import cuchaz.enigma.translation.mapping.EntryMapping;
 import cuchaz.enigma.translation.mapping.EntryResolver;
+import cuchaz.enigma.translation.mapping.Javadoc;
 import cuchaz.enigma.translation.mapping.ResolutionStrategy;
 
 public abstract class ParentedEntry<P extends Entry<?>> implements Entry<P> {
 	protected final P parent;
 	protected final String name;
-	protected final @Nullable String javadocs;
+	protected final @Nullable Javadoc javadocs;
 
-	protected ParentedEntry(P parent, String name, String javadocs) {
+	protected ParentedEntry(P parent, String name, Javadoc javadocs) {
 		this.parent = parent;
 		this.name = name;
 		this.javadocs = javadocs;
@@ -72,7 +73,7 @@ public abstract class ParentedEntry<P extends Entry<?>> implements Entry<P> {
 
 	@Nullable
 	@Override
-	public String getJavadocs() {
+	public Javadoc getJavadocs() {
 		return javadocs;
 	}
 

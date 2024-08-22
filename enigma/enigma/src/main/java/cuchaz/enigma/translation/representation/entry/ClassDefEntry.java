@@ -22,6 +22,7 @@ import cuchaz.enigma.source.RenamableTokenType;
 import cuchaz.enigma.translation.TranslateResult;
 import cuchaz.enigma.translation.Translator;
 import cuchaz.enigma.translation.mapping.EntryMapping;
+import cuchaz.enigma.translation.mapping.Javadoc;
 import cuchaz.enigma.translation.representation.AccessFlags;
 import cuchaz.enigma.translation.representation.Signature;
 
@@ -39,7 +40,7 @@ public class ClassDefEntry extends ClassEntry implements DefEntry<ClassEntry> {
 		this(parent, className, signature, access, superClass, interfaces, null);
 	}
 
-	public ClassDefEntry(ClassEntry parent, String className, Signature signature, AccessFlags access, @Nullable ClassEntry superClass, ClassEntry[] interfaces, String javadocs) {
+	public ClassDefEntry(ClassEntry parent, String className, Signature signature, AccessFlags access, @Nullable ClassEntry superClass, ClassEntry[] interfaces, Javadoc javadocs) {
 		super(parent, className, javadocs);
 		Preconditions.checkNotNull(signature, "Class signature cannot be null");
 		Preconditions.checkNotNull(access, "Class access cannot be null");
@@ -85,7 +86,7 @@ public class ClassDefEntry extends ClassEntry implements DefEntry<ClassEntry> {
 		AccessFlags translatedAccess = mapping.accessModifier().transform(access);
 		ClassEntry translatedSuper = translator.translate(superClass);
 		ClassEntry[] translatedInterfaces = Arrays.stream(interfaces).map(translator::translate).toArray(ClassEntry[]::new);
-		String docs = mapping.javadoc();
+		Javadoc docs = mapping.javadoc();
 		return TranslateResult.of(mapping.targetName() == null ? RenamableTokenType.OBFUSCATED : RenamableTokenType.DEOBFUSCATED, new ClassDefEntry(parent, translatedName, translatedSignature, translatedAccess, translatedSuper, translatedInterfaces, docs));
 	}
 

@@ -21,6 +21,7 @@ import cuchaz.enigma.source.RenamableTokenType;
 import cuchaz.enigma.translation.TranslateResult;
 import cuchaz.enigma.translation.Translator;
 import cuchaz.enigma.translation.mapping.EntryMapping;
+import cuchaz.enigma.translation.mapping.Javadoc;
 import cuchaz.enigma.translation.representation.MethodDescriptor;
 
 public class MethodEntry extends ParentedEntry<ClassEntry> implements Comparable<MethodEntry> {
@@ -30,7 +31,7 @@ public class MethodEntry extends ParentedEntry<ClassEntry> implements Comparable
 		this(parent, name, descriptor, null);
 	}
 
-	public MethodEntry(ClassEntry parent, String name, MethodDescriptor descriptor, String javadocs) {
+	public MethodEntry(ClassEntry parent, String name, MethodDescriptor descriptor, Javadoc javadocs) {
 		super(parent, name, javadocs);
 
 		Preconditions.checkNotNull(parent, "Parent cannot be null");
@@ -59,7 +60,7 @@ public class MethodEntry extends ParentedEntry<ClassEntry> implements Comparable
 	@Override
 	protected TranslateResult<? extends MethodEntry> extendedTranslate(Translator translator, @Nonnull EntryMapping mapping) {
 		String translatedName = mapping.targetName() != null ? mapping.targetName() : name;
-		String docs = mapping.javadoc();
+		Javadoc docs = mapping.javadoc();
 		return TranslateResult.of(mapping.targetName() == null ? RenamableTokenType.OBFUSCATED : RenamableTokenType.DEOBFUSCATED, new MethodEntry(parent, translatedName, translator.translate(descriptor), docs));
 	}
 

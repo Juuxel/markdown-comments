@@ -8,6 +8,7 @@ import cuchaz.enigma.source.RenamableTokenType;
 import cuchaz.enigma.translation.TranslateResult;
 import cuchaz.enigma.translation.Translator;
 import cuchaz.enigma.translation.mapping.EntryMapping;
+import cuchaz.enigma.translation.mapping.Javadoc;
 import cuchaz.enigma.translation.representation.TypeDescriptor;
 
 /**
@@ -18,7 +19,7 @@ import cuchaz.enigma.translation.representation.TypeDescriptor;
 public class LocalVariableDefEntry extends LocalVariableEntry {
 	protected final TypeDescriptor desc;
 
-	public LocalVariableDefEntry(MethodEntry ownerEntry, int index, String name, boolean parameter, TypeDescriptor desc, String javadoc) {
+	public LocalVariableDefEntry(MethodEntry ownerEntry, int index, String name, boolean parameter, TypeDescriptor desc, Javadoc javadoc) {
 		super(ownerEntry, index, name, parameter, javadoc);
 		Preconditions.checkNotNull(desc, "Variable desc cannot be null");
 
@@ -33,7 +34,7 @@ public class LocalVariableDefEntry extends LocalVariableEntry {
 	protected TranslateResult<LocalVariableEntry> extendedTranslate(Translator translator, @Nonnull EntryMapping mapping) {
 		TypeDescriptor translatedDesc = translator.translate(desc);
 		String translatedName = mapping.targetName() != null ? mapping.targetName() : name;
-		String javadoc = mapping.javadoc();
+		Javadoc javadoc = mapping.javadoc();
 		return TranslateResult.of(mapping.targetName() == null ? RenamableTokenType.OBFUSCATED : RenamableTokenType.DEOBFUSCATED, new LocalVariableDefEntry(parent, index, translatedName, parameter, translatedDesc, javadoc));
 	}
 

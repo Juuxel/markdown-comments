@@ -1,11 +1,13 @@
 package cuchaz.enigma.translation.mapping;
 
+import net.fabricmc.mappingio.CommentStyle;
+
 import java.util.Arrays;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public record EntryMapping(@Nullable String targetName, @Nonnull AccessModifier accessModifier, @Nullable String javadoc) {
+public record EntryMapping(@Nullable String targetName, @Nonnull AccessModifier accessModifier, @Nullable Javadoc javadoc) {
 	public static final EntryMapping DEFAULT = new EntryMapping(null, AccessModifier.UNCHANGED, null);
 
 	public EntryMapping {
@@ -20,7 +22,7 @@ public record EntryMapping(@Nullable String targetName, @Nonnull AccessModifier 
 		this(targetName, AccessModifier.UNCHANGED);
 	}
 
-	public EntryMapping(@Nullable String targetName, @Nullable String javadoc) {
+	public EntryMapping(@Nullable String targetName, @Nullable Javadoc javadoc) {
 		this(targetName, AccessModifier.UNCHANGED, javadoc);
 	}
 
@@ -36,7 +38,17 @@ public record EntryMapping(@Nullable String targetName, @Nonnull AccessModifier 
 		return new EntryMapping(targetName, newModifier, javadoc);
 	}
 
-	public EntryMapping withDocs(String newDocs) {
+	public EntryMapping withDocs(Javadoc newDocs) {
 		return new EntryMapping(targetName, accessModifier, newDocs);
+	}
+
+	@Nullable
+	public String javadocComment() {
+		return javadoc != null ? javadoc.comment() : null;
+	}
+
+	@Nullable
+	public CommentStyle javadocStyle() {
+		return javadoc != null ? javadoc.commentStyle() : null;
 	}
 }

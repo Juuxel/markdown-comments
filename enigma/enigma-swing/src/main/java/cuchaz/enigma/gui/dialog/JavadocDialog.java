@@ -14,10 +14,11 @@ package cuchaz.enigma.gui.dialog;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -29,7 +30,7 @@ import javax.swing.JScrollPane;
 import javax.swing.WindowConstants;
 import javax.swing.text.html.HTML;
 
-import com.google.common.base.Strings;
+import net.fabricmc.mappingio.CommentStyle;
 
 import cuchaz.enigma.analysis.EntryReference;
 import cuchaz.enigma.gui.GuiController;
@@ -39,6 +40,7 @@ import cuchaz.enigma.gui.util.GuiUtil;
 import cuchaz.enigma.gui.util.ScaleUtil;
 import cuchaz.enigma.translation.mapping.EntryChange;
 import cuchaz.enigma.translation.mapping.EntryMapping;
+import cuchaz.enigma.translation.mapping.Javadoc;
 import cuchaz.enigma.translation.representation.entry.Entry;
 import cuchaz.enigma.utils.I18n;
 import cuchaz.enigma.utils.validation.ValidationContext;
@@ -49,21 +51,23 @@ public class JavadocDialog {
 	private final Entry<?> entry;
 
 	private final ValidatableTextArea text;
+	private final JComboBox<CommentStyle> commentStyleComboBox;
 
 	private final ValidationContext vc = new ValidationContext();
 
-	private JavadocDialog(JFrame parent, GuiController controller, Entry<?> entry, String preset) {
+	private JavadocDialog(JFrame parent, GuiController controller, Entry<?> entry, Javadoc preset) {
 		this.ui = new JDialog(parent, I18n.translate("javadocs.edit"));
 		this.controller = controller;
 		this.entry = entry;
 		this.text = new ValidatableTextArea(10, 40);
+		this.commentStyleComboBox = new JComboBox<>(CommentStyle.values());
 
 		// set up dialog
 		Container contentPane = ui.getContentPane();
 		contentPane.setLayout(new BorderLayout());
 
 		// editor panel
-		this.text.setText(preset);
+		this.text.setText(preset.comment());
 		this.text.setTabSize(2);
 		contentPane.add(new JScrollPane(this.text), BorderLayout.CENTER);
 		this.text.addKeyListener(new KeyAdapter() {
@@ -92,7 +96,9 @@ public class JavadocDialog {
 
 		// buttons panel
 		JPanel buttonsPanel = new JPanel();
-		buttonsPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+		buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+		buttonsPanel.add(commentStyleComboBox);
+		buttonsPanel.add(Box.createHorizontalGlue());
 		buttonsPanel.add(GuiUtil.unboldLabel(new JLabel(I18n.translate("javadocs.instruction"))));
 		JButton cancelButton = new JButton(I18n.translate("prompt.cancel"));
 		cancelButton.addActionListener(event -> close());
@@ -192,17 +198,17 @@ public class JavadocDialog {
 	}
 
 	private EntryChange<?> getEntryChange() {
-		return text.getText().isBlank() ? EntryChange.modify(entry).clearJavadoc() : EntryChange.modify(entry).withJavadoc(text.getText());
+		return text.getText().isBlank() ? EntryChange.modify(entry).clearJavadoc() : EntryChange.modify(entry).withJavadoc(new Javadoc(text.getText(), (CommentStyle) commentStyleComboBox.getSelectedItem()));
 	}
 
 	public static void show(JFrame parent, GuiController controller, EntryReference<Entry<?>, Entry<?>> entry) {
 		// Get the existing text through the mapping as it works for all entries, including constructors.
 		EntryMapping mapping = controller.project.getMapper().getDeobfMapping(entry.entry);
-		String text = Strings.nullToEmpty(mapping.javadoc());
+		Javadoc preset = Javadoc.nullToEmpty(mapping.javadoc());
 
 		// Note: entry.entry is used instead of getNameableEntry() to include constructors,
 		// which can be documented.
-		JavadocDialog dialog = new JavadocDialog(parent, controller, entry.entry, text);
+		JavadocDialog dialog = new JavadocDialog(parent, controller, entry.entry, preset);
 		//dialog.ui.doLayout();
 		dialog.ui.setVisible(true);
 		dialog.text.grabFocus();

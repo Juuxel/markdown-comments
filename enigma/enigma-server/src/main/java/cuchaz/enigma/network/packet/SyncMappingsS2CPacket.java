@@ -9,6 +9,7 @@ import java.util.List;
 import cuchaz.enigma.network.ClientPacketHandler;
 import cuchaz.enigma.network.EnigmaServer;
 import cuchaz.enigma.translation.mapping.EntryMapping;
+import cuchaz.enigma.translation.mapping.Javadoc;
 import cuchaz.enigma.translation.mapping.tree.EntryTree;
 import cuchaz.enigma.translation.mapping.tree.EntryTreeNode;
 import cuchaz.enigma.translation.mapping.tree.HashEntryTree;
@@ -37,7 +38,7 @@ public class SyncMappingsS2CPacket implements Packet<ClientPacketHandler> {
 	private void readEntryTreeNode(DataInput input, Entry<?> parent) throws IOException {
 		Entry<?> entry = PacketHelper.readEntry(input, parent, false);
 		String name = PacketHelper.readString(input);
-		String javadoc = PacketHelper.readString(input);
+		Javadoc javadoc = PacketHelper.readJavadoc(input);
 		EntryMapping mapping = new EntryMapping(!name.isEmpty() ? name : null, !javadoc.isEmpty() ? javadoc : null);
 		mappings.insert(entry, mapping);
 		int size = input.readUnsignedShort();
@@ -66,7 +67,7 @@ public class SyncMappingsS2CPacket implements Packet<ClientPacketHandler> {
 		}
 
 		PacketHelper.writeString(output, value.targetName() != null ? value.targetName() : "");
-		PacketHelper.writeString(output, value.javadoc() != null ? value.javadoc() : "");
+		PacketHelper.writeJavadoc(output, value.javadoc() != null ? value.javadoc() : Javadoc.EMPTY);
 		Collection<? extends EntryTreeNode<EntryMapping>> children = node.getChildNodes();
 		output.writeShort(children.size());
 

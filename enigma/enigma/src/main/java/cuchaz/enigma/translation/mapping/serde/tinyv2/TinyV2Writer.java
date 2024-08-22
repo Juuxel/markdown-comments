@@ -178,7 +178,7 @@ public final class TinyV2Writer implements MappingsWriter {
 		if (mapping != null && mapping.javadoc() != null) {
 			writer.print(indent(indent));
 			writer.print("c\t");
-			writer.print(MappingHelper.escape(mapping.javadoc()));
+			writer.print(MappingHelper.escape(mapping.javadocComment()));
 			writer.println();
 		}
 	}

@@ -36,6 +36,8 @@ import cuchaz.enigma.translation.representation.entry.LocalVariableEntry;
 import cuchaz.enigma.translation.representation.entry.MethodEntry;
 import cuchaz.enigma.utils.I18n;
 
+import net.fabricmc.mappingio.CommentStyle;
+
 public enum EnigmaMappingsReader implements MappingsReader {
 	FILE {
 		@Override
@@ -168,7 +170,9 @@ public enum EnigmaMappingsReader implements MappingsReader {
 
 	private static String stripComment(String line) {
 		//Dont support comments on javadoc lines
-		if (line.trim().startsWith(EnigmaFormat.COMMENT)) {
+		String trimmed = line.trim();
+
+		if (trimmed.startsWith(EnigmaFormat.COMMENT) || trimmed.startsWith(EnigmaFormat.MARKDOWN_COMMENT)) {
 			return line;
 		}
 
@@ -214,14 +218,17 @@ public enum EnigmaMappingsReader implements MappingsReader {
 		case EnigmaFormat.PARAMETER:
 			return parseArgument(parentEntry, tokens);
 		case EnigmaFormat.COMMENT:
-			readJavadoc(parent, tokens);
+			readJavadoc(parent, tokens, CommentStyle.HTML);
+			return null;
+		case EnigmaFormat.MARKDOWN_COMMENT:
+			readJavadoc(parent, tokens, CommentStyle.MARKDOWN);
 			return null;
 		default:
 			throw new RuntimeException("Unknown token '" + keyToken + "'");
 		}
 	}
 
-	private static void readJavadoc(MappingPair<?, RawEntryMapping> parent, String[] tokens) {
+	private static void readJavadoc(MappingPair<?, RawEntryMapping> parent, String[] tokens, CommentStyle commentStyle) {
 		if (parent == null) {
 			throw new IllegalStateException("Javadoc has no parent!");
 		}
@@ -234,6 +241,7 @@ public enum EnigmaMappingsReader implements MappingsReader {
 		}
 
 		parent.getMapping().addJavadocLine(MappingHelper.unescape(jdLine));
+		parent.getMapping().setJavadocStyle(commentStyle);
 	}
 
 	private static MappingPair<ClassEntry, RawEntryMapping> parseClass(@Nullable Entry<?> parent, String[] tokens) {

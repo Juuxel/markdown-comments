@@ -33,6 +33,9 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
+import cuchaz.enigma.Enigma;
+import cuchaz.enigma.translation.mapping.Javadoc;
+
 import net.fabricmc.mappingio.MappingWriter;
 import net.fabricmc.mappingio.format.MappingFormat;
 import net.fabricmc.mappingio.tree.VisitOrder;
@@ -235,11 +238,16 @@ public enum EnigmaMappingsWriter implements MappingsWriter {
 	}
 
 	private void writeDocs(PrintWriter writer, EntryMapping mapping, int depth) {
-		String jd = mapping.javadoc();
+		Javadoc jd = mapping.javadoc();
 
 		if (jd != null) {
-			for (String line : jd.split("\\R")) {
-				writer.println(indent(EnigmaFormat.COMMENT + " " + MappingHelper.escape(line), depth + 1));
+			String prefix = switch (jd.commentStyle()) {
+			case HTML -> EnigmaFormat.COMMENT;
+			case MARKDOWN -> EnigmaFormat.MARKDOWN_COMMENT;
+            };
+
+			for (String line : jd.comment().split("\\R")) {
+				writer.println(indent(prefix + " " + MappingHelper.escape(line), depth + 1));
 			}
 		}
 	}

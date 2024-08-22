@@ -9,6 +9,8 @@ import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
 
+import cuchaz.enigma.translation.mapping.Javadoc;
+
 import org.jetbrains.annotations.ApiStatus;
 import net.fabricmc.mappingio.MappedElementKind;
 import net.fabricmc.mappingio.tree.MemoryMappingTree;
@@ -73,7 +75,7 @@ public class MappingIoConverter {
 		newMappingTree.visitClass(classEntry.getFullName());
 
 		if (mapping != null) {
-			newMappingTree.visitComment(MappedElementKind.CLASS, mapping.javadoc());
+			newMappingTree.visitComment(MappedElementKind.CLASS, mapping.javadocComment(), mapping.javadocStyle());
 		}
 
 		do {
@@ -117,7 +119,7 @@ public class MappingIoConverter {
 		}
 
 		mappingTree.visitDstName(MappedElementKind.FIELD, 0, fieldMapping.targetName());
-		mappingTree.visitComment(MappedElementKind.FIELD, fieldMapping.javadoc());
+		mappingTree.visitComment(MappedElementKind.FIELD, fieldMapping.javadocComment(), fieldMapping.javadocStyle());
 	}
 
 	private static void writeMethod(EntryTreeNode<EntryMapping> methodNode, VisitableMappingTree mappingTree) throws IOException {
@@ -131,7 +133,7 @@ public class MappingIoConverter {
 		}
 
 		mappingTree.visitDstName(MappedElementKind.METHOD, 0, methodMapping.targetName());
-		mappingTree.visitComment(MappedElementKind.METHOD, methodMapping.javadoc());
+		mappingTree.visitComment(MappedElementKind.METHOD, methodMapping.javadocComment(), methodMapping.javadocStyle());
 
 		for (EntryTreeNode<EntryMapping> child : methodNode.getChildNodes()) {
 			Entry<?> entry = child.getEntry();
@@ -161,7 +163,7 @@ public class MappingIoConverter {
 		}
 
 		mappingTree.visitDstName(MappedElementKind.METHOD_ARG, 0, argMapping.targetName());
-		mappingTree.visitComment(MappedElementKind.METHOD_ARG, argMapping.javadoc());
+		mappingTree.visitComment(MappedElementKind.METHOD_ARG, argMapping.javadocComment(), argMapping.javadocStyle());
 	}
 
 	private static void writeMethodVar(EntryTreeNode<EntryMapping> varNode, VisitableMappingTree mappingTree) throws IOException {
@@ -179,7 +181,7 @@ public class MappingIoConverter {
 		}
 
 		mappingTree.visitDstName(MappedElementKind.METHOD_VAR, 0, varMapping.targetName());
-		mappingTree.visitComment(MappedElementKind.METHOD_VAR, varMapping.javadoc());
+		mappingTree.visitComment(MappedElementKind.METHOD_VAR, varMapping.javadocComment(), varMapping.javadocStyle());
 	}
 
 	public static EntryTree<EntryMapping> fromMappingIo(VisitableMappingTree mappingTree, ProgressListener progress, @Nullable JarIndex index) {
@@ -203,7 +205,7 @@ public class MappingIoConverter {
 			dstName = dstName.substring(dstName.lastIndexOf('$') + 1);
 		}
 
-		mappingTree.insert(currentClass, new EntryMapping(dstName, classMapping.getComment()));
+		mappingTree.insert(currentClass, new EntryMapping(dstName, Javadoc.ofNullable(classMapping.getComment(), classMapping.getCommentStyle())));
 
 		for (FieldMapping fieldMapping : classMapping.getFields()) {
 			readField(fieldMapping, currentClass, mappingTree, index);
@@ -246,14 +248,14 @@ public class MappingIoConverter {
 		}
 
 		for (FieldEntry fieldEntry : fieldEntries) {
-			mappingTree.insert(fieldEntry, new EntryMapping(fieldMapping.getDstName(0), fieldMapping.getComment()));
+			mappingTree.insert(fieldEntry, new EntryMapping(fieldMapping.getDstName(0), Javadoc.ofNullable(fieldMapping.getComment(), fieldMapping.getCommentStyle())));
 		}
 	}
 
 	private static void readMethod(MethodMapping methodMapping, ClassEntry parent, EntryTree<EntryMapping> mappingTree) {
 		MethodEntry currentMethod;
 		mappingTree.insert(currentMethod = new MethodEntry(parent, methodMapping.getSrcName(), new MethodDescriptor(methodMapping.getSrcDesc())),
-				new EntryMapping(methodMapping.getDstName(0), methodMapping.getComment()));
+				new EntryMapping(methodMapping.getDstName(0), Javadoc.ofNullable(methodMapping.getComment(), methodMapping.getCommentStyle())));
 
 		for (MethodArgMapping argMapping : methodMapping.getArgs()) {
 			readMethodArg(argMapping, currentMethod, mappingTree);
@@ -269,7 +271,7 @@ public class MappingIoConverter {
 
 		mappingTree.insert(
 				new LocalVariableEntry(parent, argMapping.getLvIndex(), srcName, true, null),
-				new EntryMapping(argMapping.getDstName(0), argMapping.getComment()));
+				new EntryMapping(argMapping.getDstName(0), Javadoc.ofNullable(argMapping.getComment(), argMapping.getCommentStyle())));
 	}
 
 	private static void readMethodVar(MethodVarMapping varMapping, MethodEntry parent, EntryTree<EntryMapping> mappingTree) {
@@ -277,6 +279,6 @@ public class MappingIoConverter {
 
 		mappingTree.insert(
 				new LocalVariableEntry(parent, varMapping.getLvIndex(), srcName, false, null),
-				new EntryMapping(varMapping.getDstName(0), varMapping.getComment()));
+				new EntryMapping(varMapping.getDstName(0), Javadoc.ofNullable(varMapping.getComment(), varMapping.getCommentStyle())));
 	}
 }

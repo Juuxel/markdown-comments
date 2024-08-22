@@ -35,7 +35,7 @@ class VineflowerJavadocProvider implements IFabricJavadocProvider {
 		if (isRecord(cls)) {
 			for (StructRecordComponent component : cls.getRecordComponents()) {
 				EntryMapping mapping = remapper.getDeobfMapping(fieldEntryOf(cls, component));
-				String javadoc = mapping.javadoc();
+				String javadoc = mapping.javadocComment();
 
 				if (javadoc != null) {
 					recordComponentDocs.add(String.format("@param %s %s", mapping.targetName(), javadoc));
@@ -45,7 +45,7 @@ class VineflowerJavadocProvider implements IFabricJavadocProvider {
 
 		EntryMapping mapping = remapper.getDeobfMapping(classEntryOf(cls));
 		StringBuilder builder = new StringBuilder();
-		String javadoc = mapping.javadoc();
+		String javadoc = mapping.javadocComment();
 
 		if (javadoc != null) {
 			builder.append(javadoc);
@@ -75,7 +75,7 @@ class VineflowerJavadocProvider implements IFabricJavadocProvider {
 		}
 
 		EntryMapping mapping = remapper.getDeobfMapping(fieldEntryOf(cls, fld));
-		String javadoc = mapping.javadoc();
+		String javadoc = mapping.javadocComment();
 
 		return javadoc == null || javadoc.isBlank() ? null : javadoc.trim();
 	}
@@ -87,7 +87,7 @@ class VineflowerJavadocProvider implements IFabricJavadocProvider {
 		MethodEntry entry = methodEntryOf(cls, mth);
 		EntryMapping mapping = remapper.getDeobfMapping(entry);
 		StringBuilder builder = new StringBuilder();
-		String javadoc = mapping.javadoc();
+		String javadoc = mapping.javadocComment();
 
 		if (javadoc != null) {
 			builder.append(javadoc);
@@ -100,7 +100,7 @@ class VineflowerJavadocProvider implements IFabricJavadocProvider {
 			for (Entry<?> each : children) {
 				if (each instanceof LocalVariableEntry) {
 					mapping = remapper.getDeobfMapping(each);
-					javadoc = mapping.javadoc();
+					javadoc = mapping.javadocComment();
 
 					if (javadoc != null) {
 						if (!addedLf) {

@@ -5,8 +5,11 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import net.fabricmc.mappingio.CommentStyle;
+
 import cuchaz.enigma.translation.mapping.AccessModifier;
 import cuchaz.enigma.translation.mapping.EntryChange;
+import cuchaz.enigma.translation.mapping.Javadoc;
 import cuchaz.enigma.translation.representation.MethodDescriptor;
 import cuchaz.enigma.translation.representation.TypeDescriptor;
 import cuchaz.enigma.translation.representation.entry.ClassEntry;
@@ -33,10 +36,10 @@ public class PacketHelper {
 
 		String name = readString(input);
 
-		String javadocs = null;
+		Javadoc javadocs = null;
 
 		if (input.readBoolean()) {
-			javadocs = readString(input);
+			javadocs = readJavadoc(input);
 		}
 
 		switch (type) {
@@ -111,7 +114,7 @@ public class PacketHelper {
 		output.writeBoolean(entry.getJavadocs() != null);
 
 		if (entry.getJavadocs() != null) {
-			writeString(output, entry.getJavadocs());
+			writeJavadoc(output, entry.getJavadocs());
 		}
 
 		// type-specific stuff
@@ -142,6 +145,17 @@ public class PacketHelper {
 
 		output.writeShort(bytes.length);
 		output.write(bytes);
+	}
+
+	public static Javadoc readJavadoc(DataInput input) throws IOException {
+		String comment = readString(input);
+		CommentStyle style = input.readBoolean() ? CommentStyle.MARKDOWN : CommentStyle.HTML;
+		return new Javadoc(comment, style);
+	}
+
+	public static void writeJavadoc(DataOutput output, Javadoc javadoc) throws IOException {
+		writeString(output, javadoc.comment());
+		output.writeBoolean(javadoc.commentStyle() == CommentStyle.MARKDOWN);
 	}
 
 	public static EntryChange<?> readEntryChange(DataInput input) throws IOException {
@@ -176,7 +190,7 @@ public class PacketHelper {
 			change = change.clearJavadoc();
 			break;
 		case SET:
-			change = change.withJavadoc(readString(input));
+			change = change.withJavadoc(readJavadoc(input));
 			break;
 		}
 
@@ -198,7 +212,7 @@ public class PacketHelper {
 		}
 
 		if (change.getJavadoc().isSet()) {
-			writeString(output, change.getJavadoc().getNewValue());
+			writeJavadoc(output, change.getJavadoc().getNewValue());
 		}
 	}
 }

@@ -13,10 +13,10 @@ import cuchaz.enigma.utils.TristateChange;
 public final class EntryChange<E extends Entry<?>> {
 	private final E target;
 	private final TristateChange<String> deobfName;
-	private final TristateChange<String> javadoc;
+	private final TristateChange<Javadoc> javadoc;
 	private final TristateChange<AccessModifier> access;
 
-	private EntryChange(E target, TristateChange<String> deobfName, TristateChange<String> javadoc, TristateChange<AccessModifier> access) {
+	private EntryChange(E target, TristateChange<String> deobfName, TristateChange<Javadoc> javadoc, TristateChange<AccessModifier> access) {
 		this.target = target;
 		this.deobfName = deobfName;
 		this.javadoc = javadoc;
@@ -40,7 +40,7 @@ public final class EntryChange<E extends Entry<?>> {
 		return new EntryChange<>(this.target, TristateChange.reset(), this.javadoc, this.access);
 	}
 
-	public EntryChange<E> withJavadoc(String javadoc) {
+	public EntryChange<E> withJavadoc(Javadoc javadoc) {
 		return new EntryChange<>(this.target, this.deobfName, TristateChange.set(javadoc), this.access);
 	}
 
@@ -60,7 +60,7 @@ public final class EntryChange<E extends Entry<?>> {
 		return this.deobfName;
 	}
 
-	public TristateChange<String> getJavadoc() {
+	public TristateChange<Javadoc> getJavadoc() {
 		return this.javadoc;
 	}
 

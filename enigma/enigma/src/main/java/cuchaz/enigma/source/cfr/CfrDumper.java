@@ -8,6 +8,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import cuchaz.enigma.translation.mapping.Javadoc;
+
+import net.fabricmc.mappingio.CommentStyle;
 import org.benf.cfr.reader.bytecode.analysis.loc.HasByteCodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaRefTypeInstance;
 import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
@@ -149,7 +152,7 @@ public class CfrDumper extends StringStreamDumper {
 					}
 
 					EntryMapping mapping = mapper.getDeobfMapping(getFieldEntry(owner, field.getFieldName(), field.getField().getDescriptor()));
-					String javadoc = mapping.javadoc();
+					String javadoc = mapping.javadocComment();
 
 					if (javadoc != null) {
 						recordComponentDocs.add(String.format("@param %s %s", mapping.targetName(), javadoc));
@@ -158,30 +161,31 @@ public class CfrDumper extends StringStreamDumper {
 			}
 
 			EntryMapping mapping = mapper.getDeobfMapping(getClassEntry(owner));
-			String javadoc = null;
+			Javadoc javadoc = null;
 
 			if (mapping != null) {
 				javadoc = mapping.javadoc();
 			}
 
 			if (javadoc != null || !recordComponentDocs.isEmpty()) {
-				print("/**").newln();
+				boolean html = javadoc == null || javadoc.commentStyle() == CommentStyle.HTML;
+				if (html) print("/**").newln();
 
 				if (javadoc != null) {
-					for (String line : javadoc.split("\\R")) {
-						print(" * ").print(line).newln();
+					for (String line : javadoc.comment().split("\\R")) {
+						print(html ? " * " : "///").print(line).newln();
 					}
 
 					if (!recordComponentDocs.isEmpty()) {
-						print(" * ").newln();
+						print(html ? " * " : "///").newln();
 					}
 				}
 
 				for (String componentDoc : recordComponentDocs) {
-					print(" * ").print(componentDoc).newln();
+					print(html ? " * " : "///").print(componentDoc).newln();
 				}
 
-				print(" */").newln();
+				if (html) print(" */").newln();
 			}
 		}
 
@@ -194,12 +198,14 @@ public class CfrDumper extends StringStreamDumper {
 			List<String> lines = new ArrayList<>();
 			MethodEntry methodEntry = getMethodEntry(method);
 			EntryMapping mapping = mapper.getDeobfMapping(methodEntry);
+			boolean html = true;
 
 			if (mapping != null) {
-				String javadoc = mapping.javadoc();
+				Javadoc javadoc = mapping.javadoc();
 
 				if (javadoc != null) {
-					lines.addAll(Arrays.asList(javadoc.split("\\R")));
+					lines.addAll(Arrays.asList(javadoc.comment().split("\\R")));
+					html = javadoc.commentStyle() == CommentStyle.HTML;
 				}
 			}
 
@@ -211,7 +217,7 @@ public class CfrDumper extends StringStreamDumper {
 						EntryMapping paramMapping = mapper.getDeobfMapping(each);
 
 						if (paramMapping != null) {
-							String javadoc = paramMapping.javadoc();
+							String javadoc = paramMapping.javadocComment();
 
 							if (javadoc != null) {
 								lines.addAll(Arrays.asList(("@param " + paramMapping.targetName() + " " + javadoc).split("\\R")));
@@ -222,13 +228,13 @@ public class CfrDumper extends StringStreamDumper {
 			}
 
 			if (!lines.isEmpty()) {
-				print("/**").newln();
+				if (html) print("/**").newln();
 
 				for (String line : lines) {
-					print(" * ").print(line).newln();
+					print(html ? " * " : "///").print(line).newln();
 				}
 
-				print(" */").newln();
+				if (html) print(" */").newln();
 			}
 		}
 
@@ -243,16 +249,17 @@ public class CfrDumper extends StringStreamDumper {
 			EntryMapping mapping = mapper.getDeobfMapping(getFieldEntry(owner, field.getFieldName(), field.getDescriptor()));
 
 			if (mapping != null) {
-				String javadoc = mapping.javadoc();
+				Javadoc javadoc = mapping.javadoc();
 
 				if (javadoc != null) {
-					print("/**").newln();
+					boolean html = javadoc.commentStyle() == CommentStyle.HTML;
+					if (html) print("/**").newln();
 
-					for (String line : javadoc.split("\\R")) {
-						print(" * ").print(line).newln();
+					for (String line : javadoc.comment().split("\\R")) {
+						print(html ? " * " : "///").print(line).newln();
 					}
 
-					print(" */").newln();
+					if (html) print(" */").newln();
 				}
 			}
 		}

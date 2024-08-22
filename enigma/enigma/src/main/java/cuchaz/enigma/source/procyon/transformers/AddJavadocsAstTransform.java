@@ -60,7 +60,7 @@ public final class AddJavadocsAstTransform implements IAstTransform {
 
 		private <T extends AstNode> Comment[] getComments(T node, Function<T, Entry<?>> retriever) {
 			final EntryMapping mapping = remapper.getDeobfMapping(retriever.apply(node));
-			final String docs = Strings.emptyToNull(mapping.javadoc());
+			final String docs = Strings.emptyToNull(mapping.javadocComment());
 			return docs == null ? null : Stream.of(docs.split("\\R")).map(st -> new Comment(st, CommentType.Documentation)).toArray(Comment[]::new);
 		}
 

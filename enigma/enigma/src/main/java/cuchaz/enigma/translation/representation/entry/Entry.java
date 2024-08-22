@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
 
 import cuchaz.enigma.translation.Translatable;
 import cuchaz.enigma.translation.mapping.IdentifierValidation;
+import cuchaz.enigma.translation.mapping.Javadoc;
 import cuchaz.enigma.utils.validation.ValidationContext;
 
 public interface Entry<P extends Entry<?>> extends Translatable {
@@ -84,7 +85,7 @@ public interface Entry<P extends Entry<?>> extends Translatable {
 	 */
 	String getContextualName();
 
-	String getJavadocs();
+	Javadoc getJavadocs();
 
 	default String getSourceRemapName() {
 		return getName();

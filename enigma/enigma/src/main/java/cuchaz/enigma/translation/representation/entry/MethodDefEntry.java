@@ -19,6 +19,7 @@ import cuchaz.enigma.source.RenamableTokenType;
 import cuchaz.enigma.translation.TranslateResult;
 import cuchaz.enigma.translation.Translator;
 import cuchaz.enigma.translation.mapping.EntryMapping;
+import cuchaz.enigma.translation.mapping.Javadoc;
 import cuchaz.enigma.translation.representation.AccessFlags;
 import cuchaz.enigma.translation.representation.MethodDescriptor;
 import cuchaz.enigma.translation.representation.Signature;
@@ -31,7 +32,7 @@ public class MethodDefEntry extends MethodEntry implements DefEntry<ClassEntry> 
 		this(owner, name, descriptor, signature, access, null);
 	}
 
-	public MethodDefEntry(ClassEntry owner, String name, MethodDescriptor descriptor, Signature signature, AccessFlags access, String docs) {
+	public MethodDefEntry(ClassEntry owner, String name, MethodDescriptor descriptor, Signature signature, AccessFlags access, Javadoc docs) {
 		super(owner, name, descriptor, docs);
 		Preconditions.checkNotNull(access, "Method access cannot be null");
 		Preconditions.checkNotNull(signature, "Method signature cannot be null");
@@ -58,7 +59,7 @@ public class MethodDefEntry extends MethodEntry implements DefEntry<ClassEntry> 
 		Signature translatedSignature = translator.translate(signature);
 		String translatedName = mapping.targetName() != null ? mapping.targetName() : name;
 		AccessFlags translatedAccess = mapping.accessModifier().transform(access);
-		String docs = mapping.javadoc();
+		Javadoc docs = mapping.javadoc();
 		return TranslateResult.of(mapping.targetName() == null ? RenamableTokenType.OBFUSCATED : RenamableTokenType.DEOBFUSCATED, new MethodDefEntry(parent, translatedName, translatedDesc, translatedSignature, translatedAccess, docs));
 	}
 

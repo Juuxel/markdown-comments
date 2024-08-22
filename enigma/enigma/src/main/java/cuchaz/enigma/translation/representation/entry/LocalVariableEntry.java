@@ -10,6 +10,7 @@ import cuchaz.enigma.source.RenamableTokenType;
 import cuchaz.enigma.translation.TranslateResult;
 import cuchaz.enigma.translation.Translator;
 import cuchaz.enigma.translation.mapping.EntryMapping;
+import cuchaz.enigma.translation.mapping.Javadoc;
 
 /**
  * TypeDescriptor...
@@ -20,7 +21,7 @@ public class LocalVariableEntry extends ParentedEntry<MethodEntry> implements Co
 	protected final int index;
 	protected final boolean parameter;
 
-	public LocalVariableEntry(MethodEntry parent, int index, String name, boolean parameter, String javadoc) {
+	public LocalVariableEntry(MethodEntry parent, int index, String name, boolean parameter, Javadoc javadoc) {
 		super(parent, name, javadoc);
 
 		Preconditions.checkNotNull(parent, "Variable owner cannot be null");
@@ -51,7 +52,7 @@ public class LocalVariableEntry extends ParentedEntry<MethodEntry> implements Co
 	@Override
 	protected TranslateResult<LocalVariableEntry> extendedTranslate(Translator translator, @Nonnull EntryMapping mapping) {
 		String translatedName = mapping.targetName() != null ? mapping.targetName() : name;
-		String javadoc = mapping.javadoc();
+		Javadoc javadoc = mapping.javadoc();
 		return TranslateResult.of(mapping.targetName() == null ? RenamableTokenType.OBFUSCATED : RenamableTokenType.DEOBFUSCATED, new LocalVariableEntry(parent, index, translatedName, parameter, javadoc));
 	}
 

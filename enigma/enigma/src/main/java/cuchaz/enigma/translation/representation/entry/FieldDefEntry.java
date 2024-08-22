@@ -19,6 +19,7 @@ import cuchaz.enigma.source.RenamableTokenType;
 import cuchaz.enigma.translation.TranslateResult;
 import cuchaz.enigma.translation.Translator;
 import cuchaz.enigma.translation.mapping.EntryMapping;
+import cuchaz.enigma.translation.mapping.Javadoc;
 import cuchaz.enigma.translation.representation.AccessFlags;
 import cuchaz.enigma.translation.representation.Signature;
 import cuchaz.enigma.translation.representation.TypeDescriptor;
@@ -31,7 +32,7 @@ public class FieldDefEntry extends FieldEntry implements DefEntry<ClassEntry> {
 		this(owner, name, desc, signature, access, null);
 	}
 
-	public FieldDefEntry(ClassEntry owner, String name, TypeDescriptor desc, Signature signature, AccessFlags access, String javadocs) {
+	public FieldDefEntry(ClassEntry owner, String name, TypeDescriptor desc, Signature signature, AccessFlags access, Javadoc javadocs) {
 		super(owner, name, desc, javadocs);
 		Preconditions.checkNotNull(access, "Field access cannot be null");
 		Preconditions.checkNotNull(signature, "Field signature cannot be null");
@@ -58,7 +59,7 @@ public class FieldDefEntry extends FieldEntry implements DefEntry<ClassEntry> {
 		Signature translatedSignature = translator.translate(signature);
 		String translatedName = mapping.targetName() != null ? mapping.targetName() : name;
 		AccessFlags translatedAccess = mapping.accessModifier().transform(access);
-		String docs = mapping.javadoc();
+		Javadoc docs = mapping.javadoc();
 		return TranslateResult.of(mapping.targetName() == null ? RenamableTokenType.OBFUSCATED : RenamableTokenType.DEOBFUSCATED, new FieldDefEntry(parent, translatedName, translatedDesc, translatedSignature, translatedAccess, docs));
 	}
 

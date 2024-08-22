@@ -22,6 +22,7 @@ import cuchaz.enigma.translation.TranslateResult;
 import cuchaz.enigma.translation.Translator;
 import cuchaz.enigma.translation.mapping.EntryMapping;
 import cuchaz.enigma.translation.mapping.IdentifierValidation;
+import cuchaz.enigma.translation.mapping.Javadoc;
 import cuchaz.enigma.translation.representation.TypeDescriptor;
 import cuchaz.enigma.utils.validation.ValidationContext;
 
@@ -36,7 +37,7 @@ public class ClassEntry extends ParentedEntry<ClassEntry> implements Comparable<
 		this(parent, className, null);
 	}
 
-	public ClassEntry(@Nullable ClassEntry parent, String className, @Nullable String javadocs) {
+	public ClassEntry(@Nullable ClassEntry parent, String className, @Nullable Javadoc javadocs) {
 		super(parent, className, javadocs);
 
 		if (parent != null) {
@@ -97,7 +98,7 @@ public class ClassEntry extends ParentedEntry<ClassEntry> implements Comparable<
 		}
 
 		String translatedName = mapping.targetName() != null ? mapping.targetName() : name;
-		String docs = mapping.javadoc();
+		Javadoc docs = mapping.javadoc();
 		return TranslateResult.of(mapping.targetName() == null ? RenamableTokenType.OBFUSCATED : RenamableTokenType.DEOBFUSCATED, new ClassEntry(parent, translatedName, docs));
 	}
 
