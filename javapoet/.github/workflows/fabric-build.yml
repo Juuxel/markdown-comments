@@ -1,0 +1,12 @@
+name: fabric-build
+on: [push, pull_request]
+jobs:
+  fabric-build:
+    runs-on: ubuntu-22.04
+    container:
+      image: eclipse-temurin:21-jdk
+      options: --user root
+    steps:
+      - uses: actions/checkout@v1
+      - uses: gradle/wrapper-validation-action@v1
+      - run: ./gradlew build --stacktrace
