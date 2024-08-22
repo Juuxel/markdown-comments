@@ -16,6 +16,7 @@
 
 package net.fabricmc.mappingio.format.srg;
 
+import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public final class TsrgFileReader {
 	}
 
 	public static List<String> getNamespaces(Reader reader) throws IOException {
-		return getNamespaces(new ColumnFileReader(reader, '\t', ' '));
+		return getNamespaces(new ColumnFileReader(reader, ' '));
 	}
 
 	private static List<String> getNamespaces(ColumnFileReader reader) throws IOException {
@@ -65,38 +66,47 @@ public final class TsrgFileReader {
 		read(reader, MappingUtil.NS_SOURCE_FALLBACK, MappingUtil.NS_TARGET_FALLBACK, visitor);
 	}
 
-	public static void read(Reader reader, String sourceNs, String targetNs, MappingVisitor visitor) throws IOException {
-		read(new ColumnFileReader(reader, '\t', ' '), sourceNs, targetNs, visitor);
-	}
-
-	public static void read(ColumnFileReader reader, String sourceNs, String targetNs, MappingVisitor visitor) throws IOException {
-		MappingFormat format = reader.nextCol("tsrg2") ? format = MappingFormat.TSRG_2_FILE : MappingFormat.TSRG_FILE;
-		String srcNamespace;
-		List<String> dstNamespaces;
-
-		if (format == MappingFormat.TSRG_2_FILE) {
-			srcNamespace = reader.nextCol();
-			dstNamespaces = new ArrayList<>();
-			String dstNamespace;
-
-			while ((dstNamespace = reader.nextCol()) != null) {
-				dstNamespaces.add(dstNamespace);
-			}
-
-			reader.nextLine(0);
-		} else {
-			srcNamespace = sourceNs;
-			dstNamespaces = Collections.singletonList(targetNs);
-		}
+	public static void read(Reader r, String sourceNs, String targetNs, MappingVisitor visitor) throws IOException {
+		ColumnFileReader reader;
+		CharArrayReader parentReader = null;
 
 		if (visitor.getFlags().contains(MappingFlag.NEEDS_MULTIPLE_PASSES)) {
-			reader.mark();
+			char[] buffer = new char[100_000];
+			int pos = 0;
+			int len;
+
+			while ((len = r.read(buffer, pos, buffer.length - pos)) >= 0) {
+				pos += len;
+				if (pos == buffer.length) buffer = Arrays.copyOf(buffer, buffer.length * 2);
+			}
+
+			parentReader = new CharArrayReader(buffer, 0, pos);
+			reader = new ColumnFileReader(parentReader, ' ');
+		} else {
+			reader = new ColumnFileReader(r, ' ');
 		}
 
-		int dstNsCount = dstNamespaces.size();
-		List<String> nameTmp = dstNamespaces.size() > 1 ? new ArrayList<>(dstNamespaces.size() - 1) : null;
+		MappingFormat format = MappingFormat.TSRG_FILE;
+		String srcNamespace = sourceNs;
+		List<String> dstNamespaces = Collections.singletonList(targetNs);
 
 		for (;;) {
+			if (reader.nextCol("tsrg2")) { // tsrg2 magic
+				format = MappingFormat.TSRG_2_FILE;
+				srcNamespace = reader.nextCol();
+				dstNamespaces = new ArrayList<>();
+				String dstNamespace;
+
+				while ((dstNamespace = reader.nextCol()) != null) {
+					dstNamespaces.add(dstNamespace);
+				}
+
+				reader.nextLine(0);
+			}
+
+			int dstNsCount = dstNamespaces.size();
+			List<String> nameTmp = dstNamespaces.size() > 1 ? new ArrayList<>(dstNamespaces.size() - 1) : null;
+
 			if (visitor.visitHeader()) {
 				visitor.visitNamespaces(srcNamespace, dstNamespaces);
 			}
@@ -109,14 +119,8 @@ public final class TsrgFileReader {
 					if (reader.hasExtraIndents()) continue;
 					reader.mark();
 					String line = reader.nextCols(false);
-
-					if ((line == null || line.isEmpty()) && reader.isAtEof()) {
-						reader.discardMark();
-						continue;
-					}
-
+					if (line == null && reader.isAtEof()) continue;
 					reader.reset();
-					reader.discardMark();
 					String[] parts = line.split("((?<= )|(?= ))"); // Split on spaces, but keep them
 
 					if (format != MappingFormat.TSRG_2_FILE && parts.length >= 4 && !parts[3].startsWith("#")) { // CSRG
@@ -180,8 +184,12 @@ public final class TsrgFileReader {
 
 			if (visitor.visitEnd()) break;
 
-			int markIdx = reader.reset();
-			assert markIdx == 1;
+			if (parentReader == null) {
+				throw new IllegalStateException("repeated visitation requested without NEEDS_MULTIPLE_PASSES");
+			} else {
+				parentReader.reset();
+				reader = new ColumnFileReader(parentReader, ' ');
+			}
 		}
 	}
 
