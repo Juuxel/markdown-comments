@@ -16,15 +16,17 @@
 
 package net.fabricmc.mappingio.format.proguard;
 
+import java.io.BufferedReader;
+import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.Collections;
 
 import net.fabricmc.mappingio.MappedElementKind;
 import net.fabricmc.mappingio.MappingFlag;
 import net.fabricmc.mappingio.MappingUtil;
 import net.fabricmc.mappingio.MappingVisitor;
-import net.fabricmc.mappingio.format.ColumnFileReader;
 import net.fabricmc.mappingio.format.MappingFormat;
 
 /**
@@ -42,33 +44,45 @@ public final class ProGuardFileReader {
 	}
 
 	public static void read(Reader reader, String sourceNs, String targetNs, MappingVisitor visitor) throws IOException {
-		read(new ColumnFileReader(reader, /* random illegal character */ ';', ' '), sourceNs, targetNs, visitor);
+		BufferedReader br = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
+
+		read(br, sourceNs, targetNs, visitor);
 	}
 
-	private static void read(ColumnFileReader reader, String sourceNs, String targetNs, MappingVisitor visitor) throws IOException {
-		boolean readerMarked = false;
+	private static void read(BufferedReader reader, String sourceNs, String targetNs, MappingVisitor visitor) throws IOException {
+		CharArrayReader parentReader = null;
 
 		if (visitor.getFlags().contains(MappingFlag.NEEDS_MULTIPLE_PASSES)) {
-			reader.mark();
-			readerMarked = true;
+			char[] buffer = new char[100_000];
+			int pos = 0;
+			int len;
+
+			while ((len = reader.read(buffer, pos, buffer.length - pos)) >= 0) {
+				pos += len;
+
+				if (pos == buffer.length) buffer = Arrays.copyOf(buffer, buffer.length * 2);
+			}
+
+			parentReader = new CharArrayReader(buffer, 0, pos);
+			reader = new BufferedReader(parentReader);
 		}
 
-		StringBuilder descSb = null;
+		StringBuilder tmp = null;
 
 		for (;;) {
-			if (visitor.visitHeader()) {
+			boolean visitHeader = visitor.visitHeader();
+
+			if (visitHeader) {
 				visitor.visitNamespaces(sourceNs, Collections.singletonList(targetNs));
 			}
 
 			if (visitor.visitContent()) {
-				if (descSb == null) descSb = new StringBuilder();
+				if (tmp == null) tmp = new StringBuilder();
 
 				String line;
 				boolean visitClass = false;
 
-				do {
-					if ((line = reader.nextCols(false)) == null) continue;
-
+				while ((line = reader.readLine()) != null) {
 					line = line.trim();
 					if (line.isEmpty() || line.startsWith("#")) continue;
 
@@ -97,7 +111,7 @@ public final class ProGuardFileReader {
 
 						if (parts[1].indexOf('(') < 0) { // field: <type> <deobf> -> <obf>
 							String name = parts[1];
-							String desc = pgTypeToAsm(parts[0], descSb);
+							String desc = pgTypeToAsm(parts[0], tmp);
 
 							if (visitor.visitField(name, desc)) {
 								String mappedName = parts[3];
@@ -129,7 +143,7 @@ public final class ProGuardFileReader {
 							if (part1.lastIndexOf('.', pos - 1) < 0 && part1.length() == pos3 + 1) { // no inlined method
 								String name = part1.substring(0, pos);
 								String argDesc = part1.substring(pos, pos3 + 1);
-								String desc = pgDescToAsm(argDesc, retType, descSb);
+								String desc = pgDescToAsm(argDesc, retType, tmp);
 
 								if (visitor.visitMethod(name, desc)) {
 									String mappedName = parts[3];
@@ -139,17 +153,17 @@ public final class ProGuardFileReader {
 							}
 						}
 					}
-				} while (reader.nextLine(0));
+				}
 			}
 
 			if (visitor.visitEnd()) break;
 
-			if (!readerMarked) {
+			if (parentReader == null) {
 				throw new IllegalStateException("repeated visitation requested without NEEDS_MULTIPLE_PASSES");
+			} else {
+				parentReader.reset();
+				reader = new BufferedReader(parentReader);
 			}
-
-			int markIdx = reader.reset();
-			assert markIdx == 1;
 		}
 	}
 
