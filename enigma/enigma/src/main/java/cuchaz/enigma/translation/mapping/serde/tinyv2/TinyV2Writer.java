@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 import com.google.common.base.Strings;
+import net.fabricmc.mappingio.CommentStyle;
 
 import cuchaz.enigma.ProgressListener;
 import cuchaz.enigma.translation.mapping.EntryMap;
@@ -177,7 +178,7 @@ public final class TinyV2Writer implements MappingsWriter {
 	private void writeComment(PrintWriter writer, EntryMapping mapping, int indent) {
 		if (mapping != null && mapping.javadoc() != null) {
 			writer.print(indent(indent));
-			writer.print("c\t");
+			writer.print(mapping.javadocStyle() == CommentStyle.HTML ? "c\t" : "md\t");
 			writer.print(MappingHelper.escape(mapping.javadocComment()));
 			writer.println();
 		}

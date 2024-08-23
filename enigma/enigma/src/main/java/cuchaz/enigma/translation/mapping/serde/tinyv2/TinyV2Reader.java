@@ -24,6 +24,8 @@ import cuchaz.enigma.translation.representation.entry.FieldEntry;
 import cuchaz.enigma.translation.representation.entry.LocalVariableEntry;
 import cuchaz.enigma.translation.representation.entry.MethodEntry;
 
+import net.fabricmc.mappingio.CommentStyle;
+
 public final class TinyV2Reader implements MappingsReader {
 	private static final String MINOR_VERSION = "0";
 	// 0 indent
@@ -126,7 +128,10 @@ public final class TinyV2Reader implements MappingsReader {
 							holds[IN_FIELD] = parseField(holds[IN_CLASS], parts, escapeNames);
 							break;
 						case "c": // class javadoc
-							addJavadoc(holds[IN_CLASS], parts);
+							addJavadoc(holds[IN_CLASS], parts, CommentStyle.HTML);
+							break;
+						case "md": // class javadoc
+							addJavadoc(holds[IN_CLASS], parts, CommentStyle.MARKDOWN);
 							break;
 						default:
 							unsupportKey(parts);
@@ -147,7 +152,10 @@ public final class TinyV2Reader implements MappingsReader {
 							// TODO add local var mapping
 							break;
 						case "c": // method javadoc
-							addJavadoc(holds[IN_METHOD], parts);
+							addJavadoc(holds[IN_METHOD], parts, CommentStyle.HTML);
+							break;
+						case "md": // method javadoc
+							addJavadoc(holds[IN_METHOD], parts, CommentStyle.MARKDOWN);
 							break;
 						default:
 							unsupportKey(parts);
@@ -159,7 +167,10 @@ public final class TinyV2Reader implements MappingsReader {
 					if (state.get(IN_FIELD)) {
 						switch (parts[0]) {
 						case "c": // field javadoc
-							addJavadoc(holds[IN_FIELD], parts);
+							addJavadoc(holds[IN_FIELD], parts, CommentStyle.HTML);
+							break;
+						case "md": // field javadoc
+							addJavadoc(holds[IN_FIELD], parts, CommentStyle.MARKDOWN);
 							break;
 						default:
 							unsupportKey(parts);
@@ -173,7 +184,10 @@ public final class TinyV2Reader implements MappingsReader {
 					if (state.get(IN_PARAMETER)) {
 						switch (parts[0]) {
 						case "c":
-							addJavadoc(holds[IN_PARAMETER], parts);
+							addJavadoc(holds[IN_PARAMETER], parts, CommentStyle.HTML);
+							break;
+						case "md":
+							addJavadoc(holds[IN_PARAMETER], parts, CommentStyle.MARKDOWN);
 							break;
 						default:
 							unsupportKey(parts);
@@ -217,12 +231,12 @@ public final class TinyV2Reader implements MappingsReader {
 		throw new IllegalArgumentException("Unsupported key " + parts[0]);
 	}
 
-	private void addJavadoc(MappingPair<? extends Entry, RawEntryMapping> pair, String[] parts) {
+	private void addJavadoc(MappingPair<? extends Entry, RawEntryMapping> pair, String[] parts, CommentStyle style) {
 		if (parts.length != 2) {
 			throw new IllegalArgumentException("Invalid javadoc declaration");
 		}
 
-		addJavadoc(pair, parts[1]);
+		addJavadoc(pair, parts[1], style);
 	}
 
 	private MappingPair<ClassEntry, RawEntryMapping> parseClass(String[] tokens, boolean escapeNames) {
@@ -265,7 +279,7 @@ public final class TinyV2Reader implements MappingsReader {
 		return new MappingPair<>(obfuscatedEntry, new RawEntryMapping(mapping));
 	}
 
-	private void addJavadoc(MappingPair<? extends Entry, RawEntryMapping> pair, String javadoc) {
+	private void addJavadoc(MappingPair<? extends Entry, RawEntryMapping> pair, String javadoc, CommentStyle style) {
 		RawEntryMapping mapping = pair.getMapping();
 
 		if (mapping == null) {
@@ -273,6 +287,7 @@ public final class TinyV2Reader implements MappingsReader {
 		}
 
 		mapping.addJavadocLine(unescape(javadoc));
+		mapping.setJavadocStyle(style);
 	}
 
 	private MappingPair<LocalVariableEntry, RawEntryMapping> parseArgument(MappingPair<? extends Entry, RawEntryMapping> parent, String[] tokens, boolean escapeNames) {
