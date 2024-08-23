@@ -50,6 +50,7 @@ public final class TypeSpec {
   public final String name;
   public final CodeBlock anonymousTypeArguments;
   public final CodeBlock javadoc;
+  public final boolean markdownJavadoc;
   public final List<AnnotationSpec> annotations;
   public final Set<Modifier> modifiers;
   public final List<TypeVariableName> typeVariables;
@@ -74,6 +75,7 @@ public final class TypeSpec {
     this.name = builder.name;
     this.anonymousTypeArguments = builder.anonymousTypeArguments;
     this.javadoc = builder.javadoc.build();
+    this.markdownJavadoc = builder.markdownJavadoc;
     this.annotations = Util.immutableList(builder.annotations);
     this.modifiers = Util.immutableSet(builder.modifiers);
     this.typeVariables = Util.immutableList(builder.typeVariables);
@@ -112,6 +114,7 @@ public final class TypeSpec {
     this.name = type.name;
     this.anonymousTypeArguments = null;
     this.javadoc = type.javadoc;
+    this.markdownJavadoc = type.markdownJavadoc;
     this.annotations = Collections.emptyList();
     this.modifiers = Collections.emptySet();
     this.typeVariables = Collections.emptyList();
@@ -212,7 +215,7 @@ public final class TypeSpec {
   private boolean emitHeader(CodeWriter codeWriter, String enumName,
       Set<Modifier> implicitModifiers) throws IOException {
     if (enumName != null) {
-      codeWriter.emitJavadoc(javadoc);
+      codeWriter.emitJavadoc(javadoc, markdownJavadoc);
       codeWriter.emitAnnotations(annotations, false);
       codeWriter.emit("$L", enumName);
       if (!anonymousTypeArguments.formatParts.isEmpty()) {
@@ -234,7 +237,7 @@ public final class TypeSpec {
       codeWriter.pushType(new TypeSpec(this));
 
       codeWriter.emitJavadoc(kind == Kind.RECORD
-          ? MethodSpec.makeJavadocWithParameters(javadoc, recordComponents) : javadoc);
+          ? MethodSpec.makeJavadocWithParameters(javadoc, recordComponents) : javadoc, markdownJavadoc);
       codeWriter.emitAnnotations(annotations, false);
       codeWriter.emitModifiers(modifiers, Util.union(implicitModifiers, kind.asMemberModifiers));
       if (kind == Kind.ANNOTATION) {
@@ -478,6 +481,7 @@ public final class TypeSpec {
     private final CodeBlock anonymousTypeArguments;
 
     private final CodeBlock.Builder javadoc = CodeBlock.builder();
+    private boolean markdownJavadoc = false;
     private TypeName superclass = ClassName.OBJECT;
     private final CodeBlock.Builder staticBlock = CodeBlock.builder();
     private final CodeBlock.Builder initializerBlock = CodeBlock.builder();
@@ -503,6 +507,12 @@ public final class TypeSpec {
       this.kind = kind;
       this.name = name;
       this.anonymousTypeArguments = anonymousTypeArguments;
+    }
+
+    public Builder addJavadoc(boolean markdown, String format, Object... args) {
+      javadoc.add(format, args);
+      this.markdownJavadoc = markdown;
+      return this;
     }
 
     public Builder addJavadoc(String format, Object... args) {

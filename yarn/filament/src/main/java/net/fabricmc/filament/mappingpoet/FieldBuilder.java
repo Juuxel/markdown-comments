@@ -497,7 +497,7 @@ public class FieldBuilder {
 	}
 
 	void addJavaDoc(ParameterSpec.Builder paramBuilder) {
-		mappings.addFieldDoc(paramBuilder::addJavadoc, classNode.name, fieldNode.name, fieldNode.desc);
+		mappings.addFieldDoc((markdown, format, args) -> paramBuilder.addJavadoc(format, args), classNode.name, fieldNode.name, fieldNode.desc);
 	}
 
 	private void addDirectAnnotations() {

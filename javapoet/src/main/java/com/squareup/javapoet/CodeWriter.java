@@ -23,7 +23,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -50,7 +49,8 @@ final class CodeWriter {
   private final LineWrapper out;
   private int indentLevel;
 
-  private boolean javadoc = false;
+  private boolean htmlJavadoc = false;
+  private boolean markdownJavadoc = false;
   private boolean comment = false;
   private String packageName = NO_PACKAGE;
   private final List<TypeSpec> typeSpecStack = new ArrayList<>();
@@ -150,17 +150,26 @@ final class CodeWriter {
     }
   }
 
-  public void emitJavadoc(CodeBlock javadocCodeBlock) throws IOException {
+  public void emitJavadoc(CodeBlock javadocCodeBlock, boolean markdown) throws IOException {
     if (javadocCodeBlock.isEmpty()) return;
 
-    emit("/**\n");
-    javadoc = true;
+    // FIXME: shouldn't be needed
+    htmlJavadoc = false;
+    markdownJavadoc = false;
+
+    if (markdown) {
+      markdownJavadoc = true;
+    } else {
+      emit("/**\n");
+      htmlJavadoc = true;
+    }
     try {
       emit(javadocCodeBlock, true);
     } finally {
-      javadoc = false;
+      htmlJavadoc = false;
+      markdownJavadoc = false;
     }
-    emit(" */\n");
+    if (!markdown) emit(" */\n");
   }
 
   public void emitAnnotations(List<AnnotationSpec> annotations, boolean inline) throws IOException {
@@ -406,7 +415,7 @@ final class CodeWriter {
     }
 
     // We'll have to use the fully-qualified name. Mark the type as importable for a future pass.
-    if (!javadoc) {
+    if (!htmlJavadoc && !markdownJavadoc) {
       importableType(className);
     }
 
@@ -474,9 +483,9 @@ final class CodeWriter {
     for (String line : LINE_BREAKING_PATTERN.split(s, -1)) {
       // Emit a newline character. Make sure blank lines in Javadoc & comments look good.
       if (!first) {
-        if ((javadoc || comment) && trailingNewline) {
+        if ((htmlJavadoc || markdownJavadoc || comment) && trailingNewline) {
           emitIndentation();
-          out.append(javadoc ? " *" : "//");
+          out.append(htmlJavadoc ? " *" : (markdownJavadoc ? "///" : "//"));
         }
         out.append("\n");
         trailingNewline = true;
@@ -494,8 +503,10 @@ final class CodeWriter {
       // Emit indentation and comment prefix if necessary.
       if (trailingNewline) {
         emitIndentation();
-        if (javadoc) {
+        if (htmlJavadoc) {
           out.append(" * ");
+        } else if (markdownJavadoc) {
+          out.append("/// ");
         } else if (comment) {
           out.append("// ");
         }

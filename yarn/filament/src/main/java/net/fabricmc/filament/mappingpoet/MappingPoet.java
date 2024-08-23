@@ -208,10 +208,11 @@ public class MappingPoet {
 			String parentClass = name.substring(0, name.lastIndexOf("$"));
 
 			if (!existingClasses.containsKey(parentClass)) {
-				throw new RuntimeException("Could not find parent class: " + parentClass + " for " + classNode.name);
+				// FIXME: I have no clue why it's not sorting the classes correctly
+				System.err.println("Could not find parent class: " + parentClass + " for " + classNode.name);
+			} else {
+				existingClasses.get(parentClass).addInnerClass(classBuilder);
 			}
-
-			existingClasses.get(parentClass).addInnerClass(classBuilder);
 		}
 
 		classBuilder.addMembers();

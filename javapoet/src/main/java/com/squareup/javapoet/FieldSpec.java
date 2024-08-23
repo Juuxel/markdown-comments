@@ -33,6 +33,7 @@ public final class FieldSpec {
   public final TypeName type;
   public final String name;
   public final CodeBlock javadoc;
+  public final boolean markdownJavadoc;
   public final List<AnnotationSpec> annotations;
   public final Set<Modifier> modifiers;
   public final CodeBlock initializer;
@@ -41,6 +42,7 @@ public final class FieldSpec {
     this.type = checkNotNull(builder.type, "type == null");
     this.name = checkNotNull(builder.name, "name == null");
     this.javadoc = builder.javadoc.build();
+    this.markdownJavadoc = builder.markdownJavadoc;
     this.annotations = Util.immutableList(builder.annotations);
     this.modifiers = Util.immutableSet(builder.modifiers);
     this.initializer = (builder.initializer == null)
@@ -53,7 +55,7 @@ public final class FieldSpec {
   }
 
   void emit(CodeWriter codeWriter, Set<Modifier> implicitModifiers) throws IOException {
-    codeWriter.emitJavadoc(javadoc);
+    codeWriter.emitJavadoc(javadoc, markdownJavadoc);
     codeWriter.emitAnnotations(annotations, false);
     codeWriter.emitModifiers(modifiers, implicitModifiers);
     codeWriter.emit("$T $L", type, name);
@@ -111,6 +113,7 @@ public final class FieldSpec {
     private final String name;
 
     private final CodeBlock.Builder javadoc = CodeBlock.builder();
+    private boolean markdownJavadoc = false;
     private CodeBlock initializer = null;
 
     public final List<AnnotationSpec> annotations = new ArrayList<>();
@@ -119,6 +122,12 @@ public final class FieldSpec {
     private Builder(TypeName type, String name) {
       this.type = type;
       this.name = name;
+    }
+
+    public Builder addJavadoc(boolean markdown, String format, Object... args) {
+      javadoc.add(format, args);
+      markdownJavadoc = markdown;
+      return this;
     }
 
     public Builder addJavadoc(String format, Object... args) {

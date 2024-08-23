@@ -45,6 +45,7 @@ public final class MethodSpec {
 
   public final String name;
   public final CodeBlock javadoc;
+  public final boolean markdownJavadoc;
   public final List<AnnotationSpec> annotations;
   public final Set<Modifier> modifiers;
   public final List<TypeVariableName> typeVariables;
@@ -64,6 +65,7 @@ public final class MethodSpec {
 
     this.name = checkNotNull(builder.name, "name == null");
     this.javadoc = builder.javadoc.build();
+    this.markdownJavadoc = builder.markdownJavadoc;
     this.annotations = Util.immutableList(builder.annotations);
     this.modifiers = Util.immutableSet(builder.modifiers);
     this.typeVariables = Util.immutableList(builder.typeVariables);
@@ -83,7 +85,7 @@ public final class MethodSpec {
   void emit(CodeWriter codeWriter, String enclosingName, Set<Modifier> implicitModifiers,
       boolean compactConstructor)
       throws IOException {
-    codeWriter.emitJavadoc(javadocWithParameters());
+    codeWriter.emitJavadoc(javadocWithParameters(), markdownJavadoc);
     codeWriter.emitAnnotations(annotations, false);
     codeWriter.emitModifiers(modifiers, implicitModifiers);
 
@@ -313,6 +315,7 @@ public final class MethodSpec {
     private String name;
 
     private final CodeBlock.Builder javadoc = CodeBlock.builder();
+    private boolean markdownJavadoc = false;
     private TypeName returnType;
     private final Set<TypeName> exceptions = new LinkedHashSet<>();
     private final CodeBlock.Builder code = CodeBlock.builder();
@@ -334,6 +337,12 @@ public final class MethodSpec {
           "not a valid name: %s", name);
       this.name = name;
       this.returnType = name.equals(CONSTRUCTOR) ? null : TypeName.VOID;
+      return this;
+    }
+
+    public Builder addJavadoc(boolean markdown, String format, Object... args) {
+      javadoc.add(format, args);
+      markdownJavadoc = markdown;
       return this;
     }
 

@@ -24,6 +24,7 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.List;
 import java.util.Map;
 
+import net.fabricmc.mappingio.CommentStyle;
 import net.fabricmc.mappingio.MappingReader;
 import net.fabricmc.mappingio.adapter.MappingSourceNsSwitch;
 import net.fabricmc.mappingio.format.MappingFormat;
@@ -55,12 +56,16 @@ public class MappingsStore {
 		return tree;
 	}
 
-	private void addDoc(ElementMappingView element, DocAdder adder) {
+	private CommentStyle addDoc(ElementMappingView element, DocAdder adder) {
 		String doc = element.getComment();
 
 		if (doc != null) {
-			adder.addJavadoc("$L", doc);
+			adder.addJavadoc(element.getCommentStyle() == CommentStyle.MARKDOWN, "$L", doc);
+			return element.getCommentStyle();
 		}
+
+		// Fall back to HTML for extra comments if nothing else is found
+		return CommentStyle.HTML;
 	}
 
 	public void addClassDoc(DocAdder adder, String className) {
@@ -70,12 +75,12 @@ public class MappingsStore {
 			return;
 		}
 
-		addDoc(classDef, adder);
-		adder.addJavadoc("\n");
+		CommentStyle style = addDoc(classDef, adder);
+		adder.addJavadoc(style == CommentStyle.MARKDOWN, "\n");
 
 		for (int id = SRC_NAMESPACE_ID; id < maxNamespace; id++) {
 			String transformedName = classDef.getName(id);
-			adder.addJavadoc("@mapping {@literal $L:$L}\n", tree.getNamespaceName(id), transformedName);
+			adder.addJavadoc(style == CommentStyle.MARKDOWN, "@mapping {@literal $L:$L}\n", tree.getNamespaceName(id), transformedName);
 		}
 	}
 
@@ -92,13 +97,13 @@ public class MappingsStore {
 			return;
 		}
 
-		addDoc(fieldDef, addJavadoc);
-		addJavadoc.addJavadoc("\n");
+		CommentStyle style = addDoc(fieldDef, addJavadoc);
+		addJavadoc.addJavadoc(style == CommentStyle.MARKDOWN, "\n");
 
 		for (int id = SRC_NAMESPACE_ID; id < maxNamespace; id++) {
 			String transformedName = fieldDef.getName(id);
 			String mixinForm = "L" + classDef.getName(id) + ";" + transformedName + ":" + fieldDef.getDesc(id);
-			addJavadoc.addJavadoc("@mapping {@literal $L:$L:$L}\n", tree.getNamespaceName(id), transformedName, mixinForm);
+			addJavadoc.addJavadoc(style == CommentStyle.MARKDOWN, "@mapping {@literal $L:$L:$L}\n", tree.getNamespaceName(id), transformedName, mixinForm);
 		}
 	}
 
@@ -132,19 +137,22 @@ public class MappingsStore {
 
 		var methodDef = found.getValue();
 		var ownerDef = found.getKey();
+		boolean markdown;
 
 		if (!ownerDef.equals(methodDef.getOwner())) {
-			adder.addJavadoc("{@inheritDoc}");
+			adder.addJavadoc(false, "{@inheritDoc}");
+			markdown = false;
 		} else {
-			addDoc(methodDef, adder);
+			CommentStyle style = addDoc(methodDef, adder);
+			markdown = style == CommentStyle.MARKDOWN;
 		}
 
-		adder.addJavadoc("\n");
+		adder.addJavadoc(markdown, "\n");
 
 		for (int id = SRC_NAMESPACE_ID; id < maxNamespace; id++) {
 			String transformedName = methodDef.getName(id);
 			String mixinForm = "L" + ownerDef.getName(id) + ";" + transformedName + methodDef.getDesc(id);
-			adder.addJavadoc("@mapping {@literal $L:$L:$L}\n", tree.getNamespaceName(id), transformedName, mixinForm);
+			adder.addJavadoc(markdown, "@mapping {@literal $L:$L:$L}\n", tree.getNamespaceName(id), transformedName, mixinForm);
 		}
 	}
 
@@ -173,6 +181,6 @@ public class MappingsStore {
 	}
 
 	public interface DocAdder {
-		void addJavadoc(String format, Object... args);
+		void addJavadoc(boolean markdown, String format, Object... args);
 	}
 }
