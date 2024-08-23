@@ -1,0 +1,3 @@
+[submodule "asm"]
+	path = asm
+	url = https://gitlab.ow2.org/asm/asm/
