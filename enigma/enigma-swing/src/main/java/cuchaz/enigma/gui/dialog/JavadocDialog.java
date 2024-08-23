@@ -95,6 +95,7 @@ public class JavadocDialog {
 		this.text.setFont(UiConfig.activeUseCustomFonts() ? UiConfig.getEditorFont() : UiConfig.getFallbackEditorFont());
 
 		// buttons panel
+		commentStyleComboBox.setSelectedItem(preset.commentStyle());
 		JPanel buttonsPanel = new JPanel();
 		buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
 		buttonsPanel.add(commentStyleComboBox);
